@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"main/internal/auth"
 	"main/internal/database"
 	"net/http"
 	"strings"
@@ -12,8 +13,7 @@ import (
 )
 
 type jsonBody struct {
-	Body   string    `json:"body"`
-	UserID uuid.UUID `json:"user_id"`
+	Body string `json:"body"`
 }
 
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
@@ -33,9 +33,21 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
+		return
+	}
+
+	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
+		return
+	}
+
 	params := database.CreateChirpParams{
 		Body:   cleaned_body.Body,
-		UserID: cleaned_body.UserID,
+		UserID: userID,
 	}
 
 	dbChirp, err := cfg.db.CreateChirp(r.Context(), params)
@@ -86,7 +98,6 @@ func validationChirp(r *http.Request) (jsonBody, error) {
 	cleanedString := strings.Join(splitString, " ")
 
 	cleaned_params.Body = cleanedString
-	cleaned_params.UserID = params.UserID
 
 	// Return Clean params to the handlerCreateChirp
 	return cleaned_params, nil

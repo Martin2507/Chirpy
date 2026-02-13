@@ -17,11 +17,14 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	jwtSecret      string
 }
 
 func main() {
 	const filePathRoot = "."
 	const port = "8080"
+
+	secret := os.Getenv("SECRET")
 
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
@@ -39,16 +42,28 @@ func main() {
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
 		platform:       platform,
+		jwtSecret:      secret,
 	}
 
 	mux := http.NewServeMux()
 
+	// App Endpoint
 	mux.Handle("/app", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filePathRoot)))))
+
+	// Healthz Endpoint
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
+
+	// Metrics Endpoint
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
+
+	// Users Endpoints
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
-	// mux.HandleFunc("POST /api/validate_chirp", apiCfg.handlerValidationChirp)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateNewUser)
+	mux.HandleFunc("POST /api/login", apiCfg.handlerLogIn)
+	mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
+	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
+
+	// Chirps Endpoint
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetChirpByID)

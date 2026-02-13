@@ -2,13 +2,21 @@ package main
 
 import (
 	"encoding/json"
+	"main/internal/database"
 	"net/http"
 	"time"
+
+	"main/internal/auth"
 
 	"github.com/google/uuid"
 )
 
 func (cfg *apiConfig) handlerCreateNewUser(w http.ResponseWriter, r *http.Request) {
+
+	type parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 
 	type User struct {
 		ID        uuid.UUID `json:"id"`
@@ -18,7 +26,7 @@ func (cfg *apiConfig) handlerCreateNewUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	params := User{}
+	params := parameters{}
 	err := decoder.Decode(&params)
 
 	if err != nil {
@@ -26,7 +34,19 @@ func (cfg *apiConfig) handlerCreateNewUser(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	dbUser, err := cfg.db.CreateUser(r.Context(), params.Email)
+	hPassword, err := auth.HashPassword(params.Password)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	tempParams := database.CreateUserParams{
+		Email:          params.Email,
+		HashedPassword: hPassword,
+	}
+
+	dbUser, err := cfg.db.CreateUser(r.Context(), tempParams)
 
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Something went wrong")
