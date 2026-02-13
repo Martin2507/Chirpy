@@ -47,26 +47,28 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// App Endpoint
+	// 1. Static Assets & Fileserver
 	mux.Handle("/app", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filePathRoot)))))
 
-	// Healthz Endpoint
+	// 2. Diagnostics & Metrics (Infrastructure)
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
-
-	// Metrics Endpoint
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 
-	// Users Endpoints
+	// 3. Admin Actions (Restricted)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
+
+	// 4. Authentication & User Management
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateNewUser)
 	mux.HandleFunc("POST /api/login", apiCfg.handlerLogIn)
 	mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
 	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
+	mux.HandleFunc("PUT /api/users", apiCfg.handlerUpdateUser)
 
-	// Chirps Endpoint
+	// 5. Chirps (Domain Resource)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetChirpByID)
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.handlerDeleteChirp)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
