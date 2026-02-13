@@ -18,10 +18,11 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	type User struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Email     string    `json:"email"`
+		ID          uuid.UUID `json:"id"`
+		CreatedAt   time.Time `json:"created_at"`
+		UpdatedAt   time.Time `json:"updated_at"`
+		Email       string    `json:"email"`
+		IsChirpyRed bool      `json:"is_chirpy_red"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -64,10 +65,11 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	resp := User{
-		ID:        dbUsers.ID,
-		CreatedAt: dbUsers.CreatedAt,
-		UpdatedAt: dbUsers.UpdatedAt,
-		Email:     dbUsers.Email,
+		ID:          dbUsers.ID,
+		CreatedAt:   dbUsers.CreatedAt,
+		UpdatedAt:   dbUsers.UpdatedAt,
+		Email:       dbUsers.Email,
+		IsChirpyRed: dbUsers.IsChirpyRed,
 	}
 
 	respondWithJSON(w, http.StatusOK, resp)

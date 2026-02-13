@@ -114,3 +114,24 @@ func MakeRefreshToken() (string, error) {
 
 	return hex.EncodeToString(data), nil
 }
+
+func GetAPIKey(headers http.Header) (string, error) {
+
+	authHeader := headers.Get("Authorization")
+
+	if authHeader == "" {
+		return "", fmt.Errorf("Unauthorized Access")
+	}
+
+	splitPolkaKey := strings.Split(authHeader, " ")
+
+	if len(splitPolkaKey) < 2 {
+		return "", fmt.Errorf("Unauthorized Access")
+	}
+
+	if splitPolkaKey[0] != "ApiKey" {
+		return "", fmt.Errorf("Unauthorized Access")
+	}
+
+	return splitPolkaKey[1], nil
+}
