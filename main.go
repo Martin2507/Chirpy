@@ -3,8 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-
-	"github.com/martin/Chirpy/handlers"
 )
 
 func main() {
@@ -13,16 +11,20 @@ func main() {
 	const port = "8080"
 	const filepathRoot = "."
 
+	apiCfg := apiConfig{}
+
 	// Create a new server using the HTTP package
 	mux := http.NewServeMux()
 
 	// Serve content of the index file to the root of the project
-	mux.Handle("/app", http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
+	mux.Handle("/app", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 
 	// Serve content of the assests folder to the client
-	mux.Handle("/app/assets/", http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
+	mux.Handle("/app/assets/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 
-	mux.HandleFunc("GET /healthz", handlers.HandleHealthz)
+	mux.HandleFunc("GET /healthz", handleHealthz)
+	mux.HandleFunc("GET /metrics", apiCfg.handleMetrics)
+	mux.HandleFunc("POST /reset", apiCfg.handleMetricsReset)
 
 	// Assigne variables to the server struct of the HTTP package
 	server := &http.Server{
