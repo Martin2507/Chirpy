@@ -22,9 +22,12 @@ func main() {
 	// Serve content of the assests folder to the client
 	mux.Handle("/app/assets/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 
-	mux.HandleFunc("GET /healthz", handleHealthz)
-	mux.HandleFunc("GET /metrics", apiCfg.handleMetrics)
-	mux.HandleFunc("POST /reset", apiCfg.handleMetricsReset)
+	// Admin Handlers
+	mux.HandleFunc("GET /admin/metrics", apiCfg.handleMetrics)
+	mux.HandleFunc("POST /admin/reset", apiCfg.handleMetricsReset)
+
+	// Api Handlers
+	mux.HandleFunc("GET /api/healthz", handleHealthz)
 
 	// Assigne variables to the server struct of the HTTP package
 	server := &http.Server{
