@@ -29,6 +29,8 @@ func main() {
 	// Api Handlers
 	mux.HandleFunc("GET /api/healthz", handleHealthz)
 
+	mux.HandleFunc("POST /api/validate_chirp", apiCfg.handleChirpValidation)
+
 	// Assigne variables to the server struct of the HTTP package
 	server := &http.Server{
 		Addr:    ":" + port,
